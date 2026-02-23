@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using ContactManagerCLI.Models;
 
 namespace ContactManagerCLI.Storage
 {
-    internal class IContactStorage
+    internal interface IContactStorage
     {
+        List<Contact> LoadContacts();
+        void SaveContacts(List<Contact> contacts);
     }
 }
