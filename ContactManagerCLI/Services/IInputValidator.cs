@@ -4,7 +4,10 @@ using System.Text;
 
 namespace ContactManagerCLI.Services
 {
-    internal class IInputValidator
+    internal interface IInputValidator
     {
+        bool isValidName(string name);
+        bool isValidEmail(string email);
+        bool isValidPhone(string phone);
     }
 }
