@@ -32,16 +32,12 @@ namespace ContactManagerCLI.Services
             _contacts.Add(newContact);
         }
 
-        public bool EditContact(int id, string name, string phone, string email)
+        public void EditContact(int id, string name, string phone, string email)
         {
             var contact = _contacts.FirstOrDefault(c => c.Id == id);
-            if (contact == null)
-                return false;
-
             contact.Name = name;
             contact.Phone = phone;
             contact.Email = email;
-            return true;
         }
 
         public bool DeleteContact(int id)

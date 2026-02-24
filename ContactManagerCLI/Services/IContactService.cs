@@ -8,7 +8,7 @@ namespace ContactManagerCLI.Services
     internal interface IContactService
     {
         void AddContact(string name, string phone, string email);
-        bool EditContact(int id, string name, string phone, string email);
+        void EditContact(int id, string name, string phone, string email);
         bool DeleteContact(int id);
         Contact? ViewContact(int id);
         List<Contact> ListContacts();
