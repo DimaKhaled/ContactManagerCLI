@@ -12,12 +12,12 @@ namespace ContactManagerCLI
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("===== Welcome to Contact Manager CLI =====\n");
+
             string filePath = GetFilePath();
             IContactStorage contactStorage = new JsonContactStorage(filePath);
             IContactService contactService = new ContactService(contactStorage);
             IInputValidator inputValidator = new ContactValidator();
-
-            Console.WriteLine("===== Welcome to Contact Manager CLI =====");
             
             DisplayContacts(contactService.ListContacts());
 
@@ -54,8 +54,9 @@ namespace ContactManagerCLI
                         contactService.Save();
                         break;
                     case 9:
-                        Console.WriteLine("Exiting application. Goodbye!");
+                        Exit(contactService);
                         break;
+
                 }
             } while (choice != 9);
             
@@ -63,9 +64,35 @@ namespace ContactManagerCLI
         
 
 
+        static void Exit(IContactService contactService)
+        {
+            Console.WriteLine("\nDo you want to save to the file before exiting?");
+            Console.WriteLine("1. Yes, save and exit");
+            Console.WriteLine("2. No, just exit");
+            int exitChoice;
+            while (true)
+            {
+                string input = Console.ReadLine()!.Trim();
+                if (int.TryParse(input, out exitChoice) && (exitChoice == 1 || exitChoice == 2))
+                    break;
+                Console.WriteLine("Invalid choice! Please enter 1 to save and exit or 2 to just exit:");
+            }
+            switch (exitChoice)
+            {
+                case 1:
+                    contactService.Save();
+                    break;
+                case 2:
+                    Console.WriteLine("Exiting without saving changes...");
+                    break;
+            }
+            Console.WriteLine("Exiting application. Goodbye!");
+        }
+
+
         static void FilterContactMenu(IContactService contactService)
         {
-            Console.WriteLine("Filter by:");
+            Console.WriteLine("\nFilter by:");
             Console.WriteLine("1. Name");
             Console.WriteLine("2. Phone");
             Console.WriteLine("3. Email");
@@ -151,9 +178,9 @@ namespace ContactManagerCLI
                 return;
             }
 
-            Console.WriteLine(new string('-', 80));
-            Console.WriteLine("{ID, -5} | {Name, -20} | {Phone, -15} | {Email, -25} | {Creation Date, -10}");
-            Console.WriteLine(new string('-', 80));
+            Console.WriteLine(new string('-', 100));
+            Console.WriteLine("{0, -5} | {1, -20} | {2, -15} | {3, -25} | {4, -10}", "ID", "Name", "Phone", "Email", "Creation Date");
+            Console.WriteLine(new string('-', 100));
 
             Console.WriteLine("{0, -5} | {1, -20} | {2, -15} | {3, -25} | {4, -10}",
                                   c.Id, (c.Name.Length > 20 ? c.Name.Substring(0, 17) + "..." : c.Name),
@@ -248,7 +275,7 @@ namespace ContactManagerCLI
             string phone = Console.ReadLine()!.Trim();
             while (!validator.isValidPhone(phone))
             {
-                Console.WriteLine("Invalid phone number! Please enter a valid phone number:");
+                Console.WriteLine("Invalid phone number! Please enter a valid phone number with 11 digits:");
                 phone = Console.ReadLine()!.Trim();
             }
 
@@ -256,7 +283,8 @@ namespace ContactManagerCLI
             string email = Console.ReadLine()!.Trim();
             while (!validator.isValidEmail(email))
             {
-                Console.WriteLine("Invalid email! Please enter a valid email address:");
+                Console.WriteLine("Invalid email! Please enter a valid email address (e.g jack@test.com):");
+                email = Console.ReadLine()!.Trim();
             }
 
             contactService.AddContact(name, phone, email);
@@ -302,14 +330,14 @@ namespace ContactManagerCLI
         {
             if (contacts == null || contacts.Count == 0)
             {
-                Console.WriteLine("No contacts found.");
+                Console.WriteLine("-> No contacts found.\n");
                 return;
             }
-            Console.WriteLine("Existing contacts:");
+            Console.WriteLine("-> Existing contacts:");
 
-            Console.WriteLine(new string('-', 80));
-            Console.WriteLine("{ID, -5} | {Name, -20} | {Phone, -15} | {Email, -25} | {Creation Date, -10}");
-            Console.WriteLine(new string('-', 80));
+            Console.WriteLine(new string('-', 100));
+            Console.WriteLine("{0, -5} | {1, -20} | {2, -15} | {3, -25} | {4, -10}", "ID", "Name", "Phone", "Email", "Creation Date");
+            Console.WriteLine(new string('-', 100));
 
             foreach (var c in contacts)
             {
@@ -318,7 +346,7 @@ namespace ContactManagerCLI
                                   c.Phone, c.Email.Length > 25 ? c.Email.Substring(0, 22) + "..." : c.Email,
                                   c.CreationDate);
             }
-            Console.WriteLine(new string('-', 80));
+            Console.WriteLine(new string('-', 100));
         }
 
 
@@ -326,9 +354,7 @@ namespace ContactManagerCLI
         static string GetFilePath()
         {
             string path;
-            var invalidChars = new string(Path.GetInvalidPathChars()) + new string(Path.GetInvalidFileNameChars());
-            var invalidRegex = new Regex($"[{Regex.Escape(invalidChars)}]");
-
+            
             do
             {
                 Console.WriteLine("Enter JSON file path to store contacts:");
@@ -340,13 +366,18 @@ namespace ContactManagerCLI
                     continue;
                 }
 
-                if (invalidRegex.IsMatch(path))
+                if (Path.GetExtension(path).ToLower() != ".json")
                 {
-                    Console.WriteLine("Path contains invalid characters! TRY AGAIN");
+                    Console.WriteLine("File must have .json extension! TRY AGAIN");
                     continue;
                 }
 
-                string directory = Path.GetDirectoryName(path) ?? Directory.GetCurrentDirectory();
+                string directory = Path.GetDirectoryName(path);
+                if (string.IsNullOrWhiteSpace(directory))
+                {
+                    directory = Directory.GetCurrentDirectory();
+                    path = Path.Combine(directory, path);
+                }
 
                 if (!Directory.Exists(directory))
                 {
@@ -354,9 +385,10 @@ namespace ContactManagerCLI
                     continue;
                 }
 
-                if (Path.GetExtension(path).ToLower() != ".json")
+                string fileName = Path.GetFileName(path);
+                if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
                 {
-                    Console.WriteLine("File must have .json extension! TRY AGAIN");
+                    Console.WriteLine("File name contains invalid characters! TRY AGAIN");
                     continue;
                 }
 
